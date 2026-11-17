@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Loja Online</title>
+  <link rel="stylesheet" href="style.css">
+  
+</head>
+
+<body>
+
+  <!-- Cabeçalho principal -->
+  <header class="header">
+    <h1>Minha Loja Online</h1>
+
+    <nav class="nav-menu">
+      <ul>
+        <li><a href="#home" onclick="mostrarLoja()">Home</a></li>
+        <li><a href="#produtos" onclick="mostrarLoja()">Produtos</a></li>
+        <li><a href="#sobre" onclick="mostrarLoja()">Sobre</a></li>
+        <li><a href="#contato" onclick="mostrarLoja()">Contato</a></li>
+        <li><a id="link-carrinho" onclick="mostrarCarrinho()">Carrinho</a></li>
+      </ul>
+    </nav>
+
+    <!-- Mini carrinho fixo no topo -->
+    <div class="mini-cart">
+      <span>🛒</span>
+      <span id="cart-count">0</span>
+
+      <div class="mini-cart-dropdown" id="mini-cart-dropdown">
+        <ul id="mini-cart-list"></ul>
+        <p id="mini-total">Total: R$ 0</p>
+        <button class="btn-ver-carrinho" onclick="mostrarCarrinho()">Abrir Carrinho</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================
+    TELA 1: LOJA PRINCIPAL
+    ========================== -->
+    <div id="tela-loja">
+      <section id="home" class="banner" aria-label="Destaque principal">
+        <h2>Promoções Imperdíveis</h2>
+        <p>Os melhores produtos com os melhores preços!</p>
+      </section>
+
+      <section id="produtos" class="products">
+        <h2>Produtos</h2>
+        <div id="product-list"></div>
+      </section>
+
+      <section id="sobre" class="about">
+        <div class="about-content">
+          <section class="promo-video">
+            <h2>Conheça nossa loja</h2>
+            <video controls width="500">
+              <source src="img/video.mp4" type="video/mp4">
+              Seu navegador não suporta vídeo.
+            </video>
+          </section>
+
+          <section class="location">
+            <h3>Nossa Localização</h3>
+            <iframe
+              src="https://www.youtube.com/embed/a4cA0ET9DRY?si=WXRjD9ngmuBGpHN7"
+              width="300" height="200" title="Vídeo externo">
+            </iframe>
+
+            <iframe
+              src="https://www.google.com/maps/embed?pb=..."
+              width="300" height="200"
+              style="border:0;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              title="Maps">
+            </iframe>
+          </section>
+        </div>
+
+        <h2 class="about-title">Sobre a Loja</h2>
+        <p class="about-text">
+          Somos uma loja dedicada a oferecer produtos de qualidade com os melhores preços.
+        </p>
+      </section>
+
+      <section id="contato" class="contact">
+        <h2>Contato</h2>
+
+        <form id="formulario">
+          <input type="text" id="nome" placeholder="Nome">
+          <input type="email" id="email" placeholder="Email">
+          <button type="submit">Enviar</button>
+        </form>
+
+        <p id="mensagem"></p>
+
+        <section class="todo">
+          <h2>Lista de Tarefas</h2>
+          <input type="text" id="nova-tarefa" placeholder="Digite uma tarefa">
+          <button id="adicionar">Adicionar</button>
+          <ul id="lista-tarefas"></ul>
+        </section>
+      </section>
+    </div>
+
+    <!-- ==========================
+    TELA 2: PÁGINA DO CARRINHO
+    ========================== -->
+    <div id="tela-carrinho" class="cart-page" style="display: none;">
+      <div class="cart-page-header">
+        <h2>Meu Carrinho de Compras</h2>
+        <button class="btn-voltar" onclick="mostrarLoja()">← Continuar comprando</button>
+      </div>
+
+      <!-- Aviso de carrinho vazio -->
+      <div id="carrinho-vazio" class="empty-cart" style="display: none;">
+        <p>Seu carrinho está vazio no momento.</p>
+        <button class="btn-primary" onclick="mostrarLoja()">Ver produtos da loja</button>
+      </div>
+
+      <!-- Itens e resumo do pedido -->
+      <div id="cart-container" class="cart-layout">
+        <section class="cart-items-box">
+          <ul id="cart-list"></ul>
+        </section>
+
+        <aside class="cart-summary">
+          <h3>Resumo do Pedido</h3>
+          <p id="resumo-quantidade">Itens: 0</p>
+          <p id="total">Total: R$ 0</p>
+
+          <button id="finalizar-compra">Finalizar Compra</button>
+          <button id="limpar-carrinho" class="btn-limpar">Esvaziar Carrinho</button>
+
+          <p id="mensagem-compra"></p>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- Notificação visual -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Rodapé -->
+  <footer>
+    <p>&copy; 2026 Minha Loja Online</p>
+  </footer>
+
+  <script>
+    // ==========================
+    // VARIÁVEIS GLOBAIS
+    // ==========================
+    let telaLoja;
+    let telaCarrinho;
+    let linkCarrinho;
+
+    let productList;
+    let cartList;
+    let totalEl;
+    let resumoQuantidadeEl;
+    let carrinhoVazioEl;
+    let cartContainerEl;
+    let btnFinalizar;
+    let btnLimpar;
+    let mensagemCompra;
+
+    let cartCount;
+    let miniList;
+    let miniTotal;
+    let toastEl;
+
+    let carrinho = [];
+
+    // ==========================
+    // DADOS DOS PRODUTOS
+    // ==========================
+    const produtos = [
+      { id: 1, nome: "Smartphone", preco: 1500, imagem: "img/iphone.jpg" },
+      { id: 2, nome: "Camiseta", preco: 80, imagem: "img/camisa.jpg" },
+      { id: 3, nome: "Relógio", preco: 250, imagem: "img/relogio.jpg" }
+    ];
+
+    // ==========================
+    // NAVEGAÇÃO ENTRE TELAS (LOJA / CARRINHO)
+    // ==========================
+    function mostrarCarrinho() {
+      telaLoja.style.display = "none";
+      telaCarrinho.style.display = "block";
+      linkCarrinho.classList.add("active");
+      window.scrollTo(0, 0);
+      renderizarCarrinho();
+    }
+
+    function mostrarLoja() {
+      telaCarrinho.style.display = "none";
+      telaLoja.style.display = "block";
+      linkCarrinho.classList.remove("active");
+    }
+
+    // ==========================
+    // FEEDBACK VISUAL (TOAST)
+    // ==========================
+    function mostrarNotificacao(texto) {
+      toastEl.textContent = texto;
+      toastEl.classList.add("show");
+
+      setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 2000);
+    }
+
+    // ==========================
+    // RENDERIZAÇÃO DOS PRODUTOS
+    // ==========================
+    function renderizarProdutos() {
+      productList.innerHTML = "";
+
+      produtos.forEach(produto => {
+        const card = document.createElement("div");
+        card.classList.add("product-card");
+
+        card.innerHTML = `
+          <img src="${produto.imagem}" alt="${produto.nome}">
+          <h3>${produto.nome}</h3>
+          <p>R$ ${produto.preco}</p>
+          <button>Adicionar ao carrinho</button>
+        `;
+
+        card.querySelector("button").addEventListener("click", () => {
+          adicionarAoCarrinho(produto.id);
+        });
+
+        productList.appendChild(card);
+      });
+    }
+
+    // ==========================
+    // LÓGICA DO CARRINHO
+    // ==========================
+    function adicionarAoCarrinho(id) {
+      const itemExistente = carrinho.find(item => item.id === id);
+
+      if (itemExistente) {
+        itemExistente.quantidade += 1;
+        mostrarNotificacao(`${itemExistente.nome} adicionado (${itemExistente.quantidade}x)!`);
+      } else {
+        const produto = produtos.find(p => p.id === id);
+        carrinho.push({ ...produto, quantidade: 1 });
+        mostrarNotificacao(`${produto.nome} adicionado ao carrinho!`);
+      }
+
+      mensagemCompra.textContent = "";
+      salvarCarrinho();
+    }
+
+    function alterarQuantidade(id, mudanca) {
+      const item = carrinho.find(item => item.id === id);
+      if (!item) return;
+
+      item.quantidade += mudanca;
+
+      if (item.quantidade <= 0) {
+        removerDoCarrinho(id);
+        return;
+      }
+
+      salvarCarrinho();
+    }
+
+    function removerDoCarrinho(id) {
+      carrinho = carrinho.filter(item => item.id !== id);
+      salvarCarrinho();
+    }
+
+    function limparCarrinho() {
+      carrinho = [];
+      mensagemCompra.textContent = "";
+      salvarCarrinho();
+    }
+
+    // ==========================
+    // RENDERIZAÇÃO DO CARRINHO COMPLETO
+    // ==========================
+    function renderizarCarrinho() {
+      if (carrinho.length === 0) {
+        carrinhoVazioEl.style.display = "block";
+        cartContainerEl.style.display = "none";
+        return;
+      }
+
+      carrinhoVazioEl.style.display = "none";
+      cartContainerEl.style.display = "grid";
+
+      cartList.innerHTML = "";
+      let total = 0;
+      let totalItens = 0;
+
+      carrinho.forEach(item => {
+        const subtotal = item.preco * item.quantidade;
+        total += subtotal;
+        totalItens += item.quantidade;
+
+        const li = document.createElement("li");
+        li.classList.add("cart-item");
+
+        li.innerHTML = `
+          <div class="cart-item-info">
+            <img src="${item.imagem}" alt="${item.nome}">
+            <div>
+              <h4>${item.nome}</h4>
+              <p>Unitário: R$ ${item.preco}</p>
+            </div>
+          </div>
+
+          <div class="cart-controls">
+            <button class="btn-qtd btn-menos">-</button>
+            <span>${item.quantidade}</span>
+            <button class="btn-qtd btn-mais">+</button>
+            <span class="item-subtotal">R$ ${subtotal}</span>
+            <button class="btn-remover">Remover</button>
+          </div>
+        `;
+
+        li.querySelector(".btn-menos").addEventListener("click", () => alterarQuantidade(item.id, -1));
+        li.querySelector(".btn-mais").addEventListener("click", () => alterarQuantidade(item.id, 1));
+        li.querySelector(".btn-remover").addEventListener("click", () => removerDoCarrinho(item.id));
+
+        cartList.appendChild(li);
+      });
+
+      resumoQuantidadeEl.textContent = `Itens: ${totalItens}`;
+      totalEl.textContent = `Total: R$ ${total}`;
+    }
+
+    // ==========================
+    // MINI CARRINHO (TOPO)
+    // ==========================
+    function atualizarMiniCarrinho() {
+      const totalItens = carrinho.reduce((soma, item) => soma + item.quantidade, 0);
+      cartCount.textContent = totalItens;
+
+      miniList.innerHTML = "";
+      let total = 0;
+
+      if (carrinho.length === 0) {
+        miniList.innerHTML = "<li>Carrinho vazio</li>";
+      } else {
+        carrinho.forEach(item => {
+          const subtotal = item.preco * item.quantidade;
+          total += subtotal;
+
+          const li = document.createElement("li");
+          li.textContent = `${item.nome} (${item.quantidade}x) - R$ ${subtotal}`;
+          miniList.appendChild(li);
+        });
+      }
+
+      miniTotal.textContent = `Total: R$ ${total}`;
+    }
+
+    // ==========================
+    // FINALIZAR COMPRA
+    // ==========================
+    function finalizarCompra() {
+      if (carrinho.length === 0) {
+        mensagemCompra.textContent = "Seu carrinho está vazio!";
+        mensagemCompra.style.color = "red";
+        return;
+      }
+
+      carrinho = [];
+      salvarCarrinho();
+
+      carrinhoVazioEl.style.display = "none";
+      cartContainerEl.style.display = "grid";
+      cartList.innerHTML = "<li>Nenhum item pendente.</li>";
+      resumoQuantidadeEl.textContent = "Itens: 0";
+      totalEl.textContent = "Total: R$ 0";
+
+      mensagemCompra.textContent = "Compra realizada com sucesso!";
+      mensagemCompra.style.color = "green";
+    }
+
+    // ==========================
+    // PERSISTÊNCIA (LOCALSTORAGE)
+    // ==========================
+    function salvarCarrinho() {
+      localStorage.setItem("carrinho", JSON.stringify(carrinho));
+      renderizarCarrinho();
+      atualizarMiniCarrinho();
+    }
+
+    // ==========================
+    // FORMULÁRIO E LISTA DE TAREFAS
+    // ==========================
+    function configurarExtras() {
+      const formulario = document.getElementById("formulario");
+      const mensagemForm = document.getElementById("mensagem");
+
+      formulario.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const nome = document.getElementById("nome").value.trim();
+        const email = document.getElementById("email").value.trim();
+
+        if (nome === "" || email === "") {
+          mensagemForm.textContent = "Preencha todos os campos!";
+          mensagemForm.style.color = "red";
+          return;
+        }
+
+        mensagemForm.textContent = `Obrigado pelo contato, ${nome}!`;
+        mensagemForm.style.color = "green";
+        formulario.reset();
+      });
+
+      const btnAdicionar = document.getElementById("adicionar");
+      const inputTarefa = document.getElementById("nova-tarefa");
+      const listaTarefas = document.getElementById("lista-tarefas");
+
+      btnAdicionar.addEventListener("click", () => {
+        const texto = inputTarefa.value.trim();
+        if (texto === "") return;
+
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${texto}</span>
+          <button class="btn-remover">X</button>
+        `;
+
+        li.querySelector("button").addEventListener("click", () => li.remove());
+        listaTarefas.appendChild(li);
+        inputTarefa.value = "";
+      });
+    }
+
+    // ==========================
+    // INICIALIZAÇÃO DO SISTEMA
+    // ==========================
+    document.addEventListener("DOMContentLoaded", () => {
+      telaLoja = document.getElementById("tela-loja");
+      telaCarrinho = document.getElementById("tela-carrinho");
+      linkCarrinho = document.getElementById("link-carrinho");
+
+      productList = document.getElementById("product-list");
+      cartList = document.getElementById("cart-list");
+      totalEl = document.getElementById("total");
+      resumoQuantidadeEl = document.getElementById("resumo-quantidade");
+      carrinhoVazioEl = document.getElementById("carrinho-vazio");
+      cartContainerEl = document.getElementById("cart-container");
+      btnFinalizar = document.getElementById("finalizar-compra");
+      btnLimpar = document.getElementById("limpar-carrinho");
+      mensagemCompra = document.getElementById("mensagem-compra");
+
+      cartCount = document.getElementById("cart-count");
+      miniList = document.getElementById("mini-cart-list");
+      miniTotal = document.getElementById("mini-total");
+      toastEl = document.getElementById("toast");
+
+      const dadosSalvos = JSON.parse(localStorage.getItem("carrinho")) || [];
+      carrinho = dadosSalvos.map(item => ({
+        ...item,
+        quantidade: item.quantidade || 1
+      }));
+
+      renderizarProdutos();
+      renderizarCarrinho();
+      atualizarMiniCarrinho();
+      configurarExtras();
+
+      btnFinalizar.addEventListener("click", finalizarCompra);
+      btnLimpar.addEventListener("click", limparCarrinho);
+    });
+  </script>
+</body>
+
+</html>
